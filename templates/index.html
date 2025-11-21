@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Heritage Guide Bot</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: #0f172a;
+            color: #e5e7eb;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 700px;
+            background: #020617;
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        header {
+            border-bottom: 1px solid #1f2937;
+            padding-bottom: 8px;
+            margin-bottom: 8px;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+
+        header p {
+            margin: 4px 0 0;
+            font-size: 0.9rem;
+            color: #9ca3af;
+        }
+
+        #chat-window {
+            flex: 1;
+            background: #020617;
+            border-radius: 12px;
+            padding: 12px;
+            overflow-y: auto;
+            max-height: 60vh;
+            border: 1px solid #1f2937;
+        }
+
+        .message {
+            margin-bottom: 10px;
+            max-width: 90%;
+            line-height: 1.4;
+            white-space: pre-wrap;
+        }
+
+        .message.user {
+            text-align: right;
+        }
+
+        .message.user .bubble {
+            background: #2563eb;
+            color: white;
+            margin-left: auto;
+        }
+
+        .message.bot .bubble {
+            background: #111827;
+            color: #e5e7eb;
+            margin-right: auto;
+        }
+
+        .bubble {
+            display: inline-block;
+            padding: 8px 12px;
+            border-radius: 16px;
+            font-size: 0.9rem;
+        }
+
+        .input-area {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        #user-input {
+            flex: 1;
+            padding: 8px 10px;
+            border-radius: 999px;
+            border: 1px solid #374151;
+            background: #020617;
+            color: #e5e7eb;
+            outline: none;
+            font-size: 0.95rem;
+        }
+
+        #user-input:focus {
+            border-color: #2563eb;
+        }
+
+        #send-btn {
+            padding: 8px 16px;
+            border-radius: 999px;
+            border: none;
+            background: #2563eb;
+            color: white;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        #send-btn:hover {
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <h1>🏛️ Heritage Guide Bot</h1>
+            <p>Ask me about Indian heritage places like Curzon Gate, Victoria Memorial, Hazarduari Palace, etc.</p>
+        </header>
+
+        <div id="chat-window"></div>
+
+        <div class="input-area">
+            <input type="text" id="user-input" placeholder="Type your question here..." autocomplete="off">
+            <button id="send-btn">Send</button>
+        </div>
+    </div>
+
+    <script>
+        // Simple check that JS is running
+        console.log("JS loaded!");
+
+        const chatWindow = document.getElementById("chat-window");
+        const userInput = document.getElementById("user-input");
+        const sendBtn = document.getElementById("send-btn");
+
+        function addMessage(text, sender) {
+            const msgDiv = document.createElement("div");
+            msgDiv.classList.add("message", sender);
+
+            const bubble = document.createElement("div");
+            bubble.classList.add("bubble");
+            bubble.textContent = text;
+
+            msgDiv.appendChild(bubble);
+            chatWindow.appendChild(msgDiv);
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+        }
+
+        async function sendMessage() {
+            const text = userInput.value.trim();
+            if (!text) return;
+
+            addMessage(text, "user");
+            userInput.value = "";
+
+            try {
+                const res = await fetch("/chat", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ message: text })
+                });
+
+                const data = await res.json();
+                addMessage(data.reply, "bot");
+            } catch (err) {
+                console.error(err);
+                addMessage("Error: cannot reach server.", "bot");
+            }
+        }
+
+        sendBtn.addEventListener("click", sendMessage);
+        userInput.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") sendMessage();
+        });
+    </script>
+</body>
+</html>
